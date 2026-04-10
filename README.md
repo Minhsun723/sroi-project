@@ -43,7 +43,7 @@ sroi-app/
 │   ├── src/
 │   │   ├── App.jsx              # 主應用
 │   │   └── components/
-│   │       ├── SROIForm.jsx     # 7 步驟表單
+│   │       ├── SROIForm.jsx     # 6 步驟表單
 │   │       └── SROIReport.jsx   # 報告顯示
 │   ├── index.html
 │   └── vite.config.js
@@ -62,7 +62,7 @@ sroi-app/
 
 ## 功能
 
-- ✅ 7 步驟引導式 SROI 表單
+- ✅ 6 步驟引導式 SROI 表單
 - ✅ 即時 SROI 比率預覽
 - ✅ AI 串流生成報告（打字機效果）
 - ✅ 下載 Markdown 格式報告
