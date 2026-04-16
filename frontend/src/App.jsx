@@ -29,14 +29,18 @@ export default function App() {
       const decoder = new TextDecoder()
       setStep('report')
 
+      let sseLineBuf = ''
       let isDone = false
       while (!isDone) {
         const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '))
-        for (const line of lines) {
-          const data = line.slice(6)
+        const chunk = decoder.decode(value ?? new Uint8Array(), { stream: !done })
+        sseLineBuf += chunk
+        const parts = sseLineBuf.split(/\r?\n/)
+        sseLineBuf = done ? '' : (parts.pop() ?? '')
+        for (const raw of parts) {
+          const line = raw.trim()
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6).trim()
           if (data === '[DONE]') {
             isDone = true
             break

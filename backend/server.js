@@ -9,6 +9,11 @@ app.use(express.json());
 
 const API_KEY = 'sk-0332347c01ea4a68bee0a39dd07420a7bee14da632e14718a5ab01f16ca3a';
 const API_ENDPOINT = 'https://codgenx.infinirc.com/api/v1';
+/** 完成長度上限；長篇繁中報告若仍被截斷可提高此值或設環境變數 SROI_MAX_TOKENS */
+const MAX_COMPLETION_TOKENS = Math.min(
+  Math.max(Number(process.env.SROI_MAX_TOKENS) || 8192, 1024),
+  32000
+);
 
 app.post('/api/generate-sroi', async (req, res) => {
   const { formData: d } = req.body;
@@ -84,7 +89,7 @@ ${(d.irrelevantFactors || []).filter(f => f.outcomeName).map((f, i) =>
           { role: 'system', content: '你是一位專業的社會影響力評估（SROI）分析師，擅長生成詳細、專業的 SROI 報告。' },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 4000,
+        max_tokens: MAX_COMPLETION_TOKENS,
         temperature: 0.7,
         stream: true,
       }),
@@ -101,30 +106,49 @@ ${(d.irrelevantFactors || []).filter(f => f.outcomeName).map((f, i) =>
     res.setHeader('Connection', 'keep-alive');
 
     const reader = response.body;
-    reader.on('data', (chunk) => {
-      const lines = chunk.toString().split('\n').filter(line => line.trim());
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            res.write('data: [DONE]\n\n');
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content || '';
-            if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
-          } catch (e) {
-            console.error('JSON 解析錯誤:', e);
-          }
+    let sseLineBuf = '';
+    let upstreamDone = false;
+    let clientClosed = false;
+
+    const flushSseLines = (chunkStr, isEnd) => {
+      sseLineBuf += chunkStr;
+      const parts = sseLineBuf.split(/\r?\n/);
+      sseLineBuf = isEnd ? '' : (parts.pop() ?? '');
+      for (const raw of parts) {
+        const line = raw.trim();
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') {
+          res.write('data: [DONE]\n\n');
+          upstreamDone = true;
+          return;
         }
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content || '';
+          if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        } catch (e) {
+          console.error('JSON 解析錯誤:', e);
+        }
+      }
+    };
+
+    reader.on('data', (chunk) => {
+      if (clientClosed) return;
+      flushSseLines(chunk.toString('utf8'), false);
+      if (upstreamDone) {
+        clientClosed = true;
+        res.end();
       }
     });
 
     reader.on('end', () => {
-      if (!res.headersSent) {
+      if (clientClosed) return;
+      flushSseLines('', true);
+      if (!upstreamDone) {
         res.write('data: [DONE]\n\n');
       }
+      clientClosed = true;
       res.end();
     });
 
@@ -132,7 +156,8 @@ ${(d.irrelevantFactors || []).filter(f => f.outcomeName).map((f, i) =>
       console.error('串流錯誤:', err);
       if (!res.headersSent) {
         res.status(500).json({ error: '串流發生錯誤' });
-      } else {
+      } else if (!clientClosed) {
+        clientClosed = true;
         res.end();
       }
     });
