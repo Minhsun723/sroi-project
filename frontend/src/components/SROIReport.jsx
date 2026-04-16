@@ -1,5 +1,11 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import { normalizeMarkdownPipeTables } from '../utils/normalizeMarkdownTables'
+import { normalizeLatexFracNumbers } from '../utils/normalizeMarkdownMath'
+import 'katex/dist/katex.min.css'
 import './SROIReport.css'
 
 export default function SROIReport({ report, formData, onBack }) {
@@ -26,8 +32,14 @@ export default function SROIReport({ report, formData, onBack }) {
 
   const handlePrint = () => window.print()
 
+  const reportForDisplay = useMemo(() => {
+    const raw = typeof report === 'string' ? report : ''
+    const piped = normalizeMarkdownPipeTables(raw)
+    return normalizeLatexFracNumbers(piped)
+  }, [report])
+
   const handleDownload = () => {
-    const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' })
+    const blob = new Blob([reportForDisplay], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -92,7 +104,25 @@ export default function SROIReport({ report, formData, onBack }) {
           </div>
         ) : (
           <div className="markdown-body">
-            <ReactMarkdown>{report}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[
+                remarkGfm,
+                [remarkMath, { singleDollarTextMath: false }],
+              ]}
+              rehypePlugins={[
+                [
+                  rehypeKatex,
+                  {
+                    strict: false,
+                    throwOnError: false,
+                    errorColor: '#b42318',
+                    trust: false,
+                  },
+                ],
+              ]}
+            >
+              {reportForDisplay}
+            </ReactMarkdown>
           </div>
         )}
       </div>

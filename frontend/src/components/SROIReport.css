@@ -260,6 +260,21 @@
   padding: 0;
 }
 
+.markdown-body .katex-display {
+  margin: 1.1em 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.markdown-body .katex {
+  font-size: 1.05em;
+}
+
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
