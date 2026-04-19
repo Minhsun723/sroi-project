@@ -13,6 +13,11 @@
   border-radius: var(--radius-lg);
   padding: 6px;
   overflow-x: auto;
+  position: sticky; /* 讓 CSS 自己處理吸頂效果 */
+  top: 80px;           /* 吸附在距離視窗頂部 0px 的位置，你也可以設 top: 20px 留白 */
+  z-index: 100;     /* 確保選單不會被下面的表格或輸入框遮住 */
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .step-btn {

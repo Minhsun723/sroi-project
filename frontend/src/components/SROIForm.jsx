@@ -93,8 +93,8 @@ export default function SROIForm({ onSubmit }) {
   return (
     <div className="form-wrapper">
 
-      {/* ── STEPS NAV ── */}
-      <div className={`steps ${isSticky ? 'sticky-mode' : ''}`}>
+      {/* ── STEPS NAV ──  {`steps ${isSticky ? 'sticky-mode' : ''}`} */}
+      <div className="steps">
         {STEPS.map((s, i) => (
           <button
             key={s.id}
