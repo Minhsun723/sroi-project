@@ -2,13 +2,19 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = 'sk-0332347c01ea4a68bee0a39dd07420a7bee14da632e14718a5ab01f16ca3a';
+// 由 process.env 讀取 API_KEY 與模型名稱
+const API_KEY = process.env.API_KEY; 
+const MODEL_NAME = process.env.MODEL_NAME;
 const API_ENDPOINT = 'https://codgenx.infinirc.com/api/v1';
+
 /** 完成長度上限；長篇繁中報告若仍被截斷可提高此值或設環境變數 SROI_MAX_TOKENS */
 const MAX_COMPLETION_TOKENS = Math.min(
   Math.max(Number(process.env.SROI_MAX_TOKENS) || 8192, 1024),
@@ -88,7 +94,7 @@ ${(d.irrelevantFactors || []).filter(f => f.outcomeName).map((f, i) =>
         'Authorization': `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'codgenx-3.5',
+        model: MODEL_NAME,
         messages: [
           { role: 'system', content: '你是一位專業的社會影響力評估（SROI）分析師，擅長生成詳細、專業的 SROI 報告。' },
           { role: 'user', content: prompt }

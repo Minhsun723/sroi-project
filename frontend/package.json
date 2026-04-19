@@ -14,7 +14,8 @@
     "react-markdown": "^9.0.1",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "sroi-app": "file:.."
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",

@@ -30,6 +30,14 @@ npm run build
 npm start
 ```
 
+### 環境變數設定
+```bash
+API_KEY=YOUR-API-KEY
+MODEL_NAME=gemma-4-26b # 模型名稱可能會更新，需手動更新
+PORT=8080 # Port 有占用時導致無法執行修改此項
+
+```
+
 - 開啟：http://localhost:3001
 
 ## 專案結構
